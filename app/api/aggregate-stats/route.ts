@@ -4,9 +4,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  const isVercelCron = request.headers.get("x-vercel-cron") === "1";
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!isVercelCron && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (isVercelCron && !cronSecret) {
+    return NextResponse.json({ error: "Cron secret not configured" }, { status: 500 });
   }
 
   const supabase = createAdminClient();
