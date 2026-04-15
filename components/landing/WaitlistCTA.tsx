@@ -17,7 +17,7 @@ export default function WaitlistCTA() {
     setMessage(null);
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("waitlist").insert({ email });
+      const { error } = await supabase.from("worldsim_waitlist").insert({ email });
       if (error) {
         if (error.code === "23505") {
           setMessage({ type: "success", text: "您已在排队中，我们会尽快与您联系！" });

@@ -11,11 +11,11 @@ export default async function AdminDashboard() {
   const today = new Date().toISOString().split("T")[0];
 
   const [todayPV, totalRegs, waitlistCount, trendData, waitlistEntries] = await Promise.all([
-    supabase.from("page_views").select("id", { count: "exact", head: true }).gte("created_at", `${today}T00:00:00`),
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase.from("waitlist").select("id", { count: "exact", head: true }),
-    supabase.from("daily_stats").select("*").order("date", { ascending: false }).limit(30),
-    supabase.from("waitlist").select("*").order("created_at", { ascending: false }).limit(50),
+    supabase.from("worldsim_page_views").select("id", { count: "exact", head: true }).gte("created_at", `${today}T00:00:00`),
+    supabase.from("worldsim_profiles").select("id", { count: "exact", head: true }),
+    supabase.from("worldsim_waitlist").select("id", { count: "exact", head: true }),
+    supabase.from("worldsim_daily_stats").select("*").order("date", { ascending: false }).limit(30),
+    supabase.from("worldsim_waitlist").select("*").order("created_at", { ascending: false }).limit(50),
   ]);
 
   return (

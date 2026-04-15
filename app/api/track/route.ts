@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const supabase = createAdminClient();
     if (body.type === "pageview") {
-      await supabase.from("page_views").insert({
+      await supabase.from("worldsim_page_views").insert({
         path: body.path,
         referrer: body.referrer,
         session_id: body.session_id,
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         path: e.path,
         session_id: body.session_id,
       }));
-      await supabase.from("click_events").insert(rows);
+      await supabase.from("worldsim_click_events").insert(rows);
     }
     return NextResponse.json({ ok: true });
   } catch {

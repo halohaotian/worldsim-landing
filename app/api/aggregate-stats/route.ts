@@ -17,16 +17,16 @@ export async function GET(request: NextRequest) {
   const end = `${dateStr}T23:59:59`;
 
   const [pv, uvData, regs, wl, clicks] = await Promise.all([
-    supabase.from("page_views").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
-    supabase.from("page_views").select("session_id").gte("created_at", start).lte("created_at", end),
-    supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
-    supabase.from("waitlist").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
-    supabase.from("click_events").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
+    supabase.from("worldsim_page_views").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
+    supabase.from("worldsim_page_views").select("session_id").gte("created_at", start).lte("created_at", end),
+    supabase.from("worldsim_profiles").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
+    supabase.from("worldsim_waitlist").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
+    supabase.from("worldsim_click_events").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
   ]);
 
   const uniqueSessions = new Set(uvData.data?.map((r: any) => r.session_id)).size;
 
-  await supabase.from("daily_stats").upsert({
+  await supabase.from("worldsim_daily_stats").upsert({
     date: dateStr,
     page_views: pv.count ?? 0,
     unique_visitors: uniqueSessions,

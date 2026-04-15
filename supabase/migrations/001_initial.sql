@@ -1,10 +1,10 @@
 -- =====================================================
 -- WorldSim Landing Page - Initial Schema
--- Run this in Supabase SQL Editor
+-- All tables use worldsim_ prefix to avoid conflicts
 -- =====================================================
 
 -- 1. Profiles table
-CREATE TABLE IF NOT EXISTS profiles (
+CREATE TABLE IF NOT EXISTS worldsim_profiles (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email       TEXT NOT NULL,
   full_name   TEXT,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 
 -- 2. Waitlist table
-CREATE TABLE IF NOT EXISTS waitlist (
+CREATE TABLE IF NOT EXISTS worldsim_waitlist (
   id          SERIAL PRIMARY KEY,
   user_id     UUID REFERENCES auth.users(id),
   email       TEXT UNIQUE NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS waitlist (
 );
 
 -- 3. Page views
-CREATE TABLE IF NOT EXISTS page_views (
+CREATE TABLE IF NOT EXISTS worldsim_page_views (
   id          BIGSERIAL PRIMARY KEY,
   path        TEXT NOT NULL,
   referrer    TEXT,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS page_views (
 );
 
 -- 4. Click events
-CREATE TABLE IF NOT EXISTS click_events (
+CREATE TABLE IF NOT EXISTS worldsim_click_events (
   id          BIGSERIAL PRIMARY KEY,
   element     TEXT NOT NULL,
   path        TEXT,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS click_events (
 );
 
 -- 5. Daily stats
-CREATE TABLE IF NOT EXISTS daily_stats (
+CREATE TABLE IF NOT EXISTS worldsim_daily_stats (
   date            DATE PRIMARY KEY,
   page_views      INT DEFAULT 0,
   unique_visitors INT DEFAULT 0,
@@ -51,37 +51,37 @@ CREATE TABLE IF NOT EXISTS daily_stats (
 );
 
 -- 6. Indexes
-CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views (created_at);
-CREATE INDEX IF NOT EXISTS idx_page_views_session ON page_views (session_id);
-CREATE INDEX IF NOT EXISTS idx_click_events_created ON click_events (created_at);
-CREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist (email);
-CREATE INDEX IF NOT EXISTS idx_waitlist_status ON waitlist (status);
+CREATE INDEX IF NOT EXISTS idx_worldsim_pv_created ON worldsim_page_views (created_at);
+CREATE INDEX IF NOT EXISTS idx_worldsim_pv_session ON worldsim_page_views (session_id);
+CREATE INDEX IF NOT EXISTS idx_worldsim_ce_created ON worldsim_click_events (created_at);
+CREATE INDEX IF NOT EXISTS idx_worldsim_wl_email ON worldsim_waitlist (email);
+CREATE INDEX IF NOT EXISTS idx_worldsim_wl_status ON worldsim_waitlist (status);
 
 -- 7. Enable RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
-ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;
-ALTER TABLE click_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE daily_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE worldsim_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE worldsim_waitlist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE worldsim_page_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE worldsim_click_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE worldsim_daily_stats ENABLE ROW LEVEL SECURITY;
 
 -- 8. RLS Policies
-CREATE POLICY "Users read own profile" ON profiles
+CREATE POLICY "worldsim_users_read_own_profile" ON worldsim_profiles
   FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users read own waitlist" ON waitlist
+CREATE POLICY "worldsim_users_read_own_waitlist" ON worldsim_waitlist
   FOR SELECT USING (auth.uid() = user_id);
 
--- Allow anon/public insert to waitlist (for quick email signup from landing page)
-CREATE POLICY "Public insert waitlist" ON waitlist
+-- Allow anon insert to waitlist (for quick email signup from landing page)
+CREATE POLICY "worldsim_public_insert_waitlist" ON worldsim_waitlist
   FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Service role page_views" ON page_views
+CREATE POLICY "worldsim_service_role_pv" ON worldsim_page_views
   FOR ALL USING (auth.role() = 'service_role');
 
-CREATE POLICY "Service role click_events" ON click_events
+CREATE POLICY "worldsim_service_role_ce" ON worldsim_click_events
   FOR ALL USING (auth.role() = 'service_role');
 
-CREATE POLICY "Admin read daily_stats" ON daily_stats
+CREATE POLICY "worldsim_admin_read_stats" ON worldsim_daily_stats
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM auth.users
@@ -89,14 +89,14 @@ CREATE POLICY "Admin read daily_stats" ON daily_stats
     )
   );
 
--- 9. Auto-create profile + waitlist on signup
-CREATE OR REPLACE FUNCTION public.handle_new_user()
+-- 9. Auto-create profile + waitlist on signup (worldsim-specific function)
+CREATE OR REPLACE FUNCTION public.worldsim_handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name)
+  INSERT INTO public.worldsim_profiles (id, email, full_name)
   VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name');
 
-  INSERT INTO public.waitlist (user_id, email)
+  INSERT INTO public.worldsim_waitlist (user_id, email)
   VALUES (NEW.id, NEW.email)
   ON CONFLICT (email) DO UPDATE SET user_id = NEW.id;
 
@@ -104,7 +104,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS worldsim_on_auth_user_created ON auth.users;
+CREATE TRIGGER worldsim_on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+  FOR EACH ROW EXECUTE FUNCTION public.worldsim_handle_new_user();

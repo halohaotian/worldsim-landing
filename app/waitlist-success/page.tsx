@@ -9,7 +9,7 @@ export default async function WaitlistSuccessPage() {
   if (!user) redirect("/login");
 
   const { data: entry } = await supabase
-    .from("waitlist")
+    .from("worldsim_waitlist")
     .select("id, status")
     .eq("email", user.email)
     .single();
