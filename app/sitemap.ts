@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const DOMAIN = 'https://worldsim.vercel.app';
+const DOMAIN = 'https://mandela.world';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

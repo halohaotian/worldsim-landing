@@ -63,4 +63,4 @@ User-agent: Meta-ExternalAgent
 Disallow: /
 
 # === Sitemap ===
-Sitemap: //worldsim.vercel.app/sitemap.xml
+Sitemap: https://mandela.world/sitemap.xml
